@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đồng hồ đếm ngược</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #eff6ff;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .timer-box {
+            width: 100%;
+            max-width: 420px;
+            padding: 30px 20px;
+            text-align: center;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 5px 20px #0001;
+        }
+
+        h1 { color: #1d4ed8; }
+
+        #timer {
+            font-size: clamp(48px, 12vw, 72px);
+            font-weight: bold;
+            color: #1e40af;
+            margin: 25px 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #timer.warning {
+            color: #dc2626;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.06); }
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 7px;
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover { background: #1d4ed8; }
+
+        button:focus-visible {
+            outline: 3px solid #93c5fd;
+            outline-offset: 3px;
+        }
+
+        #status { color: #475569; }
+    </style>
+</head>
+<body>
+<div class="timer-box">
+    <h1>Đồng hồ đếm ngược</h1>
+
+    <div id="timer" role="timer" aria-label="Thời gian còn lại">
+        10:00
+    </div>
+
+    <p id="status" aria-live="polite">Sẵn sàng bắt đầu</p>
+
+    <div class="buttons">
+        <button id="startBtn">Bắt đầu</button>
+        <button id="resetBtn">Đặt lại</button>
+    </div>
+</div>
+
+<script>
+    const INITIAL_TIME = 10 * 60 * 1000;
+
+    const timer = document.getElementById("timer");
+    const status = document.getElementById("status");
+    const startBtn = document.getElementById("startBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    let remaining = INITIAL_TIME;
+    let endTime = 0;
+    let intervalId = null;
+    let finished = false;
+
+    function renderTime() {
+        const totalSeconds = Math.ceil(remaining / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+
+        timer.textContent =
+            String(minutes).padStart(2, "0") + ":" +
+            String(seconds).padStart(2, "0");
+
+        timer.classList.toggle(
+            "warning",
+            remaining > 0 && remaining < 60000
+        );
+    }
+
+    function stopTimer() {
+        if (intervalId !== null) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+    }
+
+    function tick() {
+        remaining = Math.max(0, endTime - Date.now());
+        renderTime();
+
+        if (remaining <= 0) {
+            stopTimer();
+            finished = true;
+            startBtn.disabled = true;
+            status.textContent = "Đã hết thời gian!";
+            alert("Thời gian đếm ngược đã kết thúc!");
+        }
+    }
+
+    startBtn.addEventListener("click", function () {
+        if (intervalId !== null || finished) return;
+
+        if (remaining <= 0) return;
+
+        endTime = Date.now() + remaining;
+        status.textContent = "Đang đếm ngược...";
+        startBtn.textContent = "Đang chạy";
+        startBtn.disabled = true;
+
+        // Chỉ tạo một interval tại một thời điểm.
+        intervalId = setInterval(tick, 250);
+        tick();
+    });
+
+    resetBtn.addEventListener("click", function () {
+        stopTimer();
+
+        remaining = INITIAL_TIME;
+        endTime = 0;
+        finished = false;
+
+        startBtn.disabled = false;
+        startBtn.textContent = "Bắt đầu";
+        status.textContent = "Sẵn sàng bắt đầu";
+
+        renderTime();
+    });
+
+    renderTime();
+</script>
+</body>
+</html>
